@@ -19,15 +19,19 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 public class SwingActivity extends Activity implements SensorEventListener {
-    public String EXTRA_POWER = "POWER";
-    public String EXTRA_SLICE = "SLICE";
-    public String EXTRA_TOP = "TOP";
+    public static final String EXTRA_TITLE = "TITLE";
+    public static final String EXTRA_SPEED = "SPEED";
+    public static final String EXTRA_SLICE = "SLICE";
+    public static final String EXTRA_TOP = "TOP";
+
+    private static final float LENGTH_GOLF_CLUB = 1.0f;
+    private static final float LENGTH_ARM = 0.8f;
 
     private boolean mLeftThumbPressed;
     private boolean mRightThumbPressed;
     private TextView mPromptTextView;
     private State mState = State.INITIAL;
-    private float mPower;
+    private float mSpeed;
     private float mSlice;
     private float mTop;
     private SensorManager mSensorManager;
@@ -51,7 +55,11 @@ public class SwingActivity extends Activity implements SensorEventListener {
     };
     private SoundPool mSoundPool;
     private int mGolfSound;
-    private float mLastX;
+    private float mLastGravityX;
+    private Sensor mAccelerometer;
+    private float mLastAccelerationY;
+    private float mMaxAccelerationY;
+    private float mLastGravityY;
 
     private enum State {
         INITIAL(R.string.swing_prompt_initial),
@@ -60,7 +68,8 @@ public class SwingActivity extends Activity implements SensorEventListener {
         STEADY(R.string.swing_prompt_steady),
         BACKSWING(R.string.swing_prompt_swing),
         SWING(R.string.swing_prompt_swing),
-        RELEASE(R.string.swing_prompt_release);
+        RELEASE(R.string.swing_prompt_release),
+        COMPLETE(R.string.swing_prompt_release);
 
         private final int mPromptId;
         private State(int promptId) {
@@ -77,6 +86,9 @@ public class SwingActivity extends Activity implements SensorEventListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_swing);
 
+        String title = getIntent().getStringExtra(EXTRA_TITLE);
+        setTitle((title != null) ? title : getResources().getString(R.string.swing));
+
         mPromptTextView = (TextView)findViewById(R.id.promptTextView);
 
         ((ImageView)findViewById(R.id.leftThumbImageView)).setOnTouchListener(new OnTouchListener() {
@@ -84,7 +96,8 @@ public class SwingActivity extends Activity implements SensorEventListener {
             public boolean onTouch(View view, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     mLeftThumbPressed = true;
-                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                } else if ((event.getAction() == MotionEvent.ACTION_UP) ||
+                           (event.getAction() == MotionEvent.ACTION_CANCEL)) {
                     mLeftThumbPressed = false;
                 }
                 updateState(false, false, false, false);
@@ -97,7 +110,8 @@ public class SwingActivity extends Activity implements SensorEventListener {
             public boolean onTouch(View view, MotionEvent event) {
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     mRightThumbPressed = true;
-                } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                } else if ((event.getAction() == MotionEvent.ACTION_UP) ||
+                           (event.getAction() == MotionEvent.ACTION_CANCEL)) {
                     mRightThumbPressed = false;
                 }
                 updateState(false, false, false, false);
@@ -107,6 +121,7 @@ public class SwingActivity extends Activity implements SensorEventListener {
 
         mSensorManager = (SensorManager)getSystemService(Context.SENSOR_SERVICE);
         mGravitySensor = mSensorManager.getDefaultSensor(Sensor.TYPE_GRAVITY);
+        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
 
         mVibrator = (Vibrator)getSystemService(Context.VIBRATOR_SERVICE);
 
@@ -120,6 +135,7 @@ public class SwingActivity extends Activity implements SensorEventListener {
     protected void onResume() {
         super.onResume();
         mSensorManager.registerListener(this, mGravitySensor, SensorManager.SENSOR_DELAY_FASTEST);
+        mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_FASTEST);
     }
 
     @Override
@@ -178,11 +194,12 @@ public class SwingActivity extends Activity implements SensorEventListener {
             if ((!mLeftThumbPressed) &&
                 (!mRightThumbPressed)) {
                 Intent intent = getIntent();
-                intent.putExtra(EXTRA_POWER, mPower);
+                intent.putExtra(EXTRA_SPEED, mSpeed);
                 intent.putExtra(EXTRA_SLICE, mSlice);
                 intent.putExtra(EXTRA_TOP, mTop);
                 setResult(RESULT_OK, intent);
                 finish();
+                mState = State.COMPLETE; // In case we don't get destroyed immediately.
             }
         }
 
@@ -198,6 +215,11 @@ public class SwingActivity extends Activity implements SensorEventListener {
                 mHandler.removeCallbacks(mSteadyRunnable);
             }
             if (mState == State.RELEASE) {
+                // Calculate ball speed.
+                // Speed can be deduced from centripetal acceleration using a = v*v/r, i.e. v = sqrt(a/r).
+                // We'll end up with mobile phone speed, so we then need to adjust to ball speed.
+                // Actually, screw accuracy - it's more fun if we use the raw acceleration rather than the square root to get v!
+                mSpeed = mLastAccelerationY / LENGTH_ARM * (LENGTH_ARM + LENGTH_GOLF_CLUB) / LENGTH_ARM;
                 mVibrator.vibrate(100);
                 mSoundPool.play(mGolfSound, 1.0f, 1.0f, 0, 0, 1.0f);
             }
@@ -216,16 +238,18 @@ public class SwingActivity extends Activity implements SensorEventListener {
         final float x = event.values[0];
         final float y = event.values[1];
         final float z = event.values[2];
-        final float a = (float)Math.sqrt(x * x + y * y + z * z);
-        mPositioned = ((a > 0.9 * SensorManager.GRAVITY_EARTH) &&
-                       (a < 1.1 * SensorManager.GRAVITY_EARTH) &&
-                       (Math.abs(x) < 0.1 * SensorManager.GRAVITY_EARTH) &&
-                       (y < 0) &&
-                       (Math.abs(y) > Math.abs(z)));
-        boolean backswung = (Math.abs(x) > 0.1 * SensorManager.GRAVITY_EARTH);
-        boolean hit = (Math.signum(x) != Math.signum(mLastX));
-        mLastX = x;
-
-        updateState(false, false, backswung, hit);
+        if (event.sensor == mGravitySensor) {
+            mPositioned = ((Math.abs(x) < 0.1 * SensorManager.GRAVITY_EARTH) &&
+                    (y < 0) &&
+                    (Math.abs(y) > Math.abs(z)));
+            boolean backswung = (Math.abs(x) > 0.1 * SensorManager.GRAVITY_EARTH);
+            boolean hit = (Math.signum(x) != Math.signum(mLastGravityX));
+            mLastGravityX = x;
+            mLastGravityY = y;
+            updateState(false, false, backswung, hit);
+        } else if (event.sensor == mAccelerometer) {
+            mLastAccelerationY = (mLastAccelerationY + Math.abs(y - mLastGravityY)) * 0.5f;
+            mMaxAccelerationY = Math.max(mMaxAccelerationY, mLastAccelerationY);
+        }
     }
 }

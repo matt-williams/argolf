@@ -9,6 +9,9 @@ import android.widget.Button;
 
 public class TitleActivity extends Activity {
 
+    protected static final int REQUEST_CODE_PLAY_ROUND = 1;
+    protected static final int REQUEST_CODE_DRIVING_RANGE = 2;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -17,14 +20,14 @@ public class TitleActivity extends Activity {
         ((Button)findViewById(R.id.roundButton)).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(TitleActivity.this, PlayersActivity.class));
+                startActivityForResult(new Intent(TitleActivity.this, PlayersActivity.class), REQUEST_CODE_PLAY_ROUND);
             }
         });
 
         ((Button)findViewById(R.id.drivingRangeButton)).setOnClickListener(new OnClickListener() {
             @Override
             public void onClick(View view) {
-                startActivity(new Intent(TitleActivity.this, SwingActivity.class));
+                startActivityForResult(new Intent(TitleActivity.this, PlayersActivity.class), REQUEST_CODE_DRIVING_RANGE);
             }
         });
 
@@ -34,5 +37,20 @@ public class TitleActivity extends Activity {
                 startActivity(new Intent(TitleActivity.this, AboutActivity.class));
             }
         });
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if (resultCode == RESULT_OK) {
+            switch (requestCode) {
+            case REQUEST_CODE_PLAY_ROUND:
+                break;
+            case REQUEST_CODE_DRIVING_RANGE:
+                Intent newIntent = new Intent(this, DrivingRangeActivity.class);
+                newIntent.putExtra(DrivingRangeActivity.EXTRA_PLAYERS, intent.getStringArrayExtra(PlayersActivity.EXTRA_PLAYERS));
+                startActivity(newIntent);
+                break;
+            }
+        }
     }
 }

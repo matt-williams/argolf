@@ -7,8 +7,9 @@
     <uses-sdk
         android:minSdkVersion="8"
         android:targetSdkVersion="17" />
+
     <uses-permission android:name="android.permission.VIBRATE" />
-    
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -17,7 +18,7 @@
         <activity
             android:name="com.github.matt.williams.argolf.TitleActivity"
             android:label="@string/app_name"
-        android:screenOrientation="portrait" >
+            android:screenOrientation="portrait" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -27,17 +28,22 @@
         <activity
             android:name="com.github.matt.williams.argolf.PlayersActivity"
             android:label="@string/players"
-        android:screenOrientation="portrait" >
+            android:screenOrientation="portrait" >
         </activity>
         <activity
             android:name="com.github.matt.williams.argolf.SwingActivity"
             android:label="@string/swing"
-        android:screenOrientation="portrait" >
+            android:screenOrientation="portrait" >
         </activity>
         <activity
             android:name="com.github.matt.williams.argolf.AboutActivity"
             android:label="@string/about"
-        android:screenOrientation="portrait" >
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.github.matt.williams.argolf.DrivingRangeActivity"
+            android:label="@string/driving_range"
+            android:screenOrientation="portrait" >
         </activity>
     </application>
 
