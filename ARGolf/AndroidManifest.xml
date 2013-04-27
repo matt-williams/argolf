@@ -14,13 +14,21 @@
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
         <activity
-            android:name="com.github.matt.williams.argolf.MainActivity"
+            android:name="com.github.matt.williams.argolf.TitleActivity"
             android:label="@string/app_name" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name="com.github.matt.williams.argolf.AboutActivity"
+            android:label="@string/about" >
+        </activity>
+        <activity
+            android:name="com.github.matt.williams.argolf.PlayersActivity"
+            android:label="@string/players" >
         </activity>
     </application>
 
