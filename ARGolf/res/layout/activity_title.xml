@@ -23,14 +23,22 @@
         android:textSize="30sp" />
 
     <Button
-        android:id="@+id/playButton"
+        android:id="@+id/roundButton"
         style="?android:attr/buttonStyleSmall"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
         android:layout_below="@id/textView"
-        android:layout_marginTop="34dp"
-        android:text="@string/play" />
+        android:text="@string/play_round" />
+
+    <Button
+        android:id="@+id/drivingRangeButton"
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_below="@id/roundButton"
+        android:text="@string/driving_range" />
 
     <Button
         android:id="@+id/aboutButton"
@@ -38,7 +46,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
-        android:layout_below="@id/playButton"
+        android:layout_below="@id/drivingRangeButton"
         android:text="@string/about" />
 
 </RelativeLayout>
