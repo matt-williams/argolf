@@ -11,6 +11,7 @@
 # generated files
 bin/
 gen/
+proguard/
 
 # libraries (not distributable)
 libs/
