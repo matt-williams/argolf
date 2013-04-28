@@ -96,6 +96,8 @@ public class SwingActivity extends Activity implements SensorEventListener {
         ((ImageView)findViewById(R.id.leftThumbImageView)).setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
+                boolean oldLeft = mLeftThumbPressed;
+                boolean oldRight = mRightThumbPressed;
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     mLeftThumbPressed = true;
                 } else if ((event.getAction() == MotionEvent.ACTION_UP) ||
@@ -110,6 +112,9 @@ public class SwingActivity extends Activity implements SensorEventListener {
                     // this is the right thumb.
                     mRightThumbPressed = false;
                 }
+                if ((oldLeft != mLeftThumbPressed) || (oldRight != mRightThumbPressed)) {
+                    android.util.Log.e("SwingActivity", "Left Event: " + event.getAction() + ", Left: " + oldLeft + " => " + mLeftThumbPressed + ", Right: " + oldRight + " => " + mRightThumbPressed);
+                }
                 updateState(false, false, false, false);
                 return true;
             }
@@ -118,6 +123,8 @@ public class SwingActivity extends Activity implements SensorEventListener {
         ((ImageView)findViewById(R.id.rightThumbImageView)).setOnTouchListener(new OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent event) {
+                boolean oldLeft = mLeftThumbPressed;
+                boolean oldRight = mRightThumbPressed;
                 if (event.getAction() == MotionEvent.ACTION_DOWN) {
                     mRightThumbPressed = true;
                 } else if ((event.getAction() == MotionEvent.ACTION_UP) ||
@@ -131,6 +138,9 @@ public class SwingActivity extends Activity implements SensorEventListener {
                     // Some phones seem to report ACTION_POINTER_UP for the second touch - assume
                     // this is the left thumb.
                     mLeftThumbPressed = false;
+                }
+                if ((oldLeft != mLeftThumbPressed) || (oldRight != mRightThumbPressed)) {
+                    android.util.Log.e("SwingActivity", "Right Event: " + event.getAction() + ", Left: " + oldLeft + " => " + mLeftThumbPressed + ", Right: " + oldRight + " => " + mRightThumbPressed);
                 }
                 updateState(false, false, false, false);
                 return true;

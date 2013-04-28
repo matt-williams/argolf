@@ -4,17 +4,35 @@
     android:layout_height="match_parent"
     tools:context=".RoundActivity" >
 
+    <Button android:id="@+id/driveButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/drive"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true" />
+    
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignTop="@+id/driveButton"
+        android:layout_toLeftOf="@id/driveButton"
+        android:enabled="false"
+        android:text="@string/proceed_tee" />
+
     <com.google.android.gms.maps.MapView
-        xmlns:map="http://schemas.android.com/apk/res-auto"
+        xmlns:map="http://schemas.android.com/apk/rtes-auto"
         android:id="@+id/map"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="fill_parent"
         map:mapType="terrain"
         map:uiCompass="true"
         map:uiRotateGestures="true"
         map:uiScrollGestures="true"
         map:uiTiltGestures="true"
         map:uiZoomControls="false"
-        map:uiZoomGestures="true" />
+        map:uiZoomGestures="true"
+        android:layout_above="@id/textView" />
 
 </RelativeLayout>

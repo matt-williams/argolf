@@ -12,6 +12,10 @@ import android.location.LocationManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.TextView;
 
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -63,6 +67,7 @@ public class RoundActivity extends Activity implements LocationListener {
     private Location mMyLocation;
 
     private String[] mPlayers;
+    private int[][] mScoreCard;
     private Marker[] mPlayerMarkers;
     private static final Criteria CRITERIA = new Criteria();
     static {
@@ -77,6 +82,10 @@ public class RoundActivity extends Activity implements LocationListener {
 
     private int mNextPlayerIndex;
 
+    private Button mDriveButton;
+
+    private TextView mTextView;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -85,6 +94,10 @@ public class RoundActivity extends Activity implements LocationListener {
         mMapView.onCreate(savedInstanceState);
 
         mPlayers = getIntent().getStringArrayExtra(EXTRA_PLAYERS);
+        mScoreCard = new int[mPlayers.length][];
+        for (int playerIndex = 0; playerIndex < mPlayers.length; playerIndex++) {
+            mScoreCard[playerIndex] = new int[HOLES.size()];
+        }
         mPlayerMarkers = new Marker[mPlayers.length];
 
         final GoogleMap map = mMapView.getMap();
@@ -126,6 +139,18 @@ public class RoundActivity extends Activity implements LocationListener {
         }
         mLocationManager.requestLocationUpdates(providerName, MIN_UPDATE_TIME, MIN_UPDATE_DISTANCE, this, Looper.getMainLooper());
 
+        mDriveButton = (Button)findViewById(R.id.driveButton);
+        mDriveButton.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                mDriveButton.setEnabled(false);
+                Intent intent = new Intent(RoundActivity.this, SwingActivity.class);
+                intent.putExtra(SwingActivity.EXTRA_TITLE, mPlayers[mNextPlayerIndex] + "'s Swing");
+                startActivityForResult(intent, REQUEST_CODE_SWING);
+            }
+        });
+        mTextView = (TextView)findViewById(R.id.textView);
+
         mHandler.postDelayed(new Runnable() {
             @Override
             public void run() {
@@ -151,14 +176,10 @@ public class RoundActivity extends Activity implements LocationListener {
             }
             if (mMyLocation.distanceTo(mNextLocation) < CLOSE_ENOUGH_DISTANCE) {
                 targetHole();
-                mHandler.postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        Intent intent = new Intent(RoundActivity.this, SwingActivity.class);
-                        intent.putExtra(SwingActivity.EXTRA_TITLE, mPlayers[mNextPlayerIndex] + "'s Swing");
-                        startActivityForResult(intent, REQUEST_CODE_SWING);
-                    }
-                }, 2000);
+                mTextView.setText(mPlayers[mNextPlayerIndex] + " to play next (shot " + (mScoreCard[mNextPlayerIndex][mHoleIndex] + 1) + ")\nFirst aim, and then drive");
+                mDriveButton.setEnabled(true);
+            } else {
+                mTextView.setText(mPlayers[mNextPlayerIndex] + " to play next (shot " + (mScoreCard[mNextPlayerIndex][mHoleIndex] + 1) + ")\nProceed to his ball");
             }
             map.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder(map.getCameraPosition()).target(new LatLng(mMyLocation.getLatitude(), mMyLocation.getLongitude())).bearing(mMyLocation.bearingTo(mNextLocation)).build()));
         } else {
@@ -221,6 +242,7 @@ public class RoundActivity extends Activity implements LocationListener {
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         if ((requestCode == REQUEST_CODE_SWING) &&
             (resultCode == RESULT_OK)) {
+            mScoreCard[mNextPlayerIndex][mHoleIndex]++;
             float speed = intent.getFloatExtra(SwingActivity.EXTRA_SPEED, 0.0f);
             float distance = 260.0f / 145.0f * 2.23f * speed;
             Marker marker = mPlayerMarkers[mNextPlayerIndex];
@@ -236,6 +258,7 @@ public class RoundActivity extends Activity implements LocationListener {
             mNextPlayerIndex = getNextPlayer();
             targetPlayer(mNextPlayerIndex);
         }
+        targetNextLocation();
     }
 
     @Override
