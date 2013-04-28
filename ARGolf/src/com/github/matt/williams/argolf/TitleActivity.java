@@ -46,7 +46,7 @@ public class TitleActivity extends Activity {
             switch (requestCode) {
             case REQUEST_CODE_PLAY_ROUND:
                 newIntent = new Intent(this, RoundActivity.class);
-                newIntent.putExtra(DrivingRangeActivity.EXTRA_PLAYERS, intent.getStringArrayExtra(PlayersActivity.EXTRA_PLAYERS));
+                newIntent.putExtra(RoundActivity.EXTRA_PLAYERS, intent.getStringArrayExtra(PlayersActivity.EXTRA_PLAYERS));
                 startActivity(newIntent);
                 break;
             case REQUEST_CODE_DRIVING_RANGE:

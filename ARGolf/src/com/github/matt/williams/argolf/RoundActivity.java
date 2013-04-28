@@ -19,10 +19,10 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
 import com.google.android.gms.maps.MapView;
 import com.google.android.gms.maps.MapsInitializer;
-import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.google.android.gms.maps.model.PolylineOptions;
 
@@ -61,12 +61,21 @@ public class RoundActivity extends Activity implements LocationListener {
     private LocationManager mLocationManager;
 
     private Location mMyLocation;
+
+    private String[] mPlayers;
+    private Marker[] mPlayerMarkers;
     private static final Criteria CRITERIA = new Criteria();
     static {
         CRITERIA.setAccuracy(Criteria.ACCURACY_COARSE);
     }
     private static final long MIN_UPDATE_TIME = 10000;
     private static final float MIN_UPDATE_DISTANCE = 10.0f;
+    private static final float CLOSE_ENOUGH_DISTANCE = 25.0f;
+
+    public static final String EXTRA_PLAYERS = "PLAYERS";
+    private int mHoleIndex = -1;
+
+    private int mNextPlayerIndex;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -74,6 +83,9 @@ public class RoundActivity extends Activity implements LocationListener {
         setContentView(R.layout.activity_round);
         mMapView = (MapView)findViewById(R.id.map);
         mMapView.onCreate(savedInstanceState);
+
+        mPlayers = getIntent().getStringArrayExtra(EXTRA_PLAYERS);
+        mPlayerMarkers = new Marker[mPlayers.length];
 
         final GoogleMap map = mMapView.getMap();
         map.setMyLocationEnabled(true);
@@ -83,9 +95,12 @@ public class RoundActivity extends Activity implements LocationListener {
             for (int holeIdx = 0; holeIdx < HOLES.size(); holeIdx++) {
                 Hole hole = HOLES.get(holeIdx);
                 map.addPolyline(new PolylineOptions().add(hole.tee, hole.hole).width(5).color(0x7f0000ff));
-                map.addMarker(new MarkerOptions().position(hole.tee).title("Tee " + (holeIdx + 1)).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
-                map.addMarker(new MarkerOptions().position(hole.hole).title("Hole " + (holeIdx + 1)).snippet("Par " + hole.par).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
+                //map.addMarker(new MarkerOptions().position(hole.tee).title("Tee " + (holeIdx + 1)).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN)));
+                //map.addMarker(new MarkerOptions().position(hole.hole).title("Hole " + (holeIdx + 1)).snippet("Par " + hole.par).icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED)));
                 bounds.include(hole.tee).include(hole.hole);
+            }
+            for (int playerIndex = 0; playerIndex < mPlayers.length; playerIndex++) {
+                mPlayerMarkers[playerIndex] = map.addMarker(new MarkerOptions().position(HOLES.get(0).tee).title(mPlayers[playerIndex]));
             }
             map.setOnCameraChangeListener(new OnCameraChangeListener() {
                 @Override
@@ -119,18 +134,69 @@ public class RoundActivity extends Activity implements LocationListener {
         }, 2000);
     }
 
+    private void setPlayersAtNextTee() {
+        mHoleIndex++;
+        for (int playerIndex = 0; playerIndex < mPlayerMarkers.length; playerIndex++) {
+            mPlayerMarkers[playerIndex].setPosition(HOLES.get(mHoleIndex).tee);
+        }
+    }
+
     private void targetNextLocation() {
         if (mMyLocation != null) {
             GoogleMap map = mMapView.getMap();
             if (mNextLocation == null) {
-                mNextLocation = new Location(mMyLocation);
-                mNextLocation.setLatitude(HOLES.get(0).tee.latitude);
-                mNextLocation.setLongitude(HOLES.get(0).tee.longitude);
+                setPlayersAtNextTee();
+                mNextPlayerIndex = getNextPlayer();
+                targetPlayer(mNextPlayerIndex);
+            }
+            if (mMyLocation.distanceTo(mNextLocation) < CLOSE_ENOUGH_DISTANCE) {
+                targetHole();
+                mHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        Intent intent = new Intent(RoundActivity.this, SwingActivity.class);
+                        intent.putExtra(SwingActivity.EXTRA_TITLE, mPlayers[mNextPlayerIndex] + "'s Swing");
+                        startActivityForResult(intent, REQUEST_CODE_SWING);
+                    }
+                }, 2000);
             }
             map.animateCamera(CameraUpdateFactory.newCameraPosition(new CameraPosition.Builder(map.getCameraPosition()).target(new LatLng(mMyLocation.getLatitude(), mMyLocation.getLongitude())).bearing(mMyLocation.bearingTo(mNextLocation)).build()));
         } else {
             mPendingNextLocation = true;
         }
+    }
+
+    private void targetHole() {
+        mNextLocation = latLngToLocation(HOLES.get(mHoleIndex).hole);
+    }
+
+    private int getNextPlayer() {
+        Location holeLocation = latLngToLocation(HOLES.get(mHoleIndex).hole);
+        double furthestDistance = 0.0;
+        int furthestPlayerIndex = -1;
+        for (int playerIndex = 0; playerIndex < mPlayerMarkers.length; playerIndex++) {
+            Location playerLocation = latLngToLocation(mPlayerMarkers[playerIndex].getPosition());
+            double distance = playerLocation.distanceTo(holeLocation);
+            if (distance > furthestDistance) {
+                furthestDistance = distance;
+                furthestPlayerIndex = playerIndex;
+            }
+        }
+        if (furthestDistance < CLOSE_ENOUGH_DISTANCE) {
+            furthestPlayerIndex = -1;
+        }
+        return furthestPlayerIndex;
+    }
+
+    private void targetPlayer(int playerIndex) {
+        mNextLocation = latLngToLocation(mPlayerMarkers[playerIndex].getPosition());
+    }
+
+    private Location latLngToLocation(LatLng latLng) {
+        Location location = new Location(mMyLocation);
+        location.setLatitude(latLng.latitude);
+        location.setLongitude(latLng.longitude);
+        return location;
     }
 
     @Override
@@ -153,7 +219,23 @@ public class RoundActivity extends Activity implements LocationListener {
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        if ((requestCode == REQUEST_CODE_SWING) &&
+            (resultCode == RESULT_OK)) {
+            float speed = intent.getFloatExtra(SwingActivity.EXTRA_SPEED, 0.0f);
+            float distance = 260.0f / 145.0f * 2.23f * speed;
+            Marker marker = mPlayerMarkers[mNextPlayerIndex];
+            float bearing = mMapView.getMap().getCameraPosition().bearing;
+            LatLng oldPosition = marker.getPosition();
+            LatLng newPosition = new LatLng(oldPosition.latitude + distance * Math.cos(bearing / 180 * (float)Math.PI) / 111131.745, oldPosition.longitude + distance * Math.sin(bearing / 180 * (float)Math.PI) / 78846.80572069259);
+            marker.setPosition(newPosition);
+        }
 
+        mNextPlayerIndex = getNextPlayer();
+        if (mNextPlayerIndex == -1) {
+            setPlayersAtNextTee();
+            mNextPlayerIndex = getNextPlayer();
+            targetPlayer(mNextPlayerIndex);
+        }
     }
 
     @Override
@@ -162,7 +244,11 @@ public class RoundActivity extends Activity implements LocationListener {
         if (mPendingNextLocation) {
             mPendingNextLocation = false;
             targetNextLocation();
+        } else if ((mNextLocation != null) &&
+                   (mMyLocation.distanceTo(mNextLocation) < CLOSE_ENOUGH_DISTANCE)) {
+            targetNextLocation();
         }
+
     }
 
     @Override
