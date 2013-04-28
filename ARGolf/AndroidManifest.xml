@@ -36,15 +36,15 @@
         android:theme="@style/AppTheme" >
 
         <!-- Release build key -->
-        <!--
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyCvKFD8y0f7Ze8t0PIVb33QC-0LSK9r7qc" />
-        -->
         <!-- Debug build key -->
+        <!--
         <meta-data
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyA6aRfjJRBPzpT9QCaxas3nHYU3fKRQ4YU" />
+        -->
 
         <activity
             android:name="com.github.matt.williams.argolf.TitleActivity"
