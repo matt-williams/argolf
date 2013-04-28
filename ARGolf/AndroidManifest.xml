@@ -10,12 +10,42 @@
 
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.example.mapdemo.permission.MAPS_RECEIVE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+    <uses-permission android:name="com.google.android.providers.gsf.permission.READ_GSERVICES" />
+    <!--
+     The following two permissions are not required to use
+     Google Maps Android API v2, but are recommended.
+    -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
+
+    <permission
+        android:name="com.example.mapdemo.permission.MAPS_RECEIVE"
+        android:protectionLevel="signature" />
 
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:theme="@style/AppTheme" >
+
+        <!-- Release build key -->
+        <!--
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyCvKFD8y0f7Ze8t0PIVb33QC-0LSK9r7qc" />
+        -->
+        <!-- Debug build key -->
+        <meta-data
+            android:name="com.google.android.maps.v2.API_KEY"
+            android:value="AIzaSyA6aRfjJRBPzpT9QCaxas3nHYU3fKRQ4YU" />
+
         <activity
             android:name="com.github.matt.williams.argolf.TitleActivity"
             android:label="@string/app_name"
@@ -44,6 +74,11 @@
         <activity
             android:name="com.github.matt.williams.argolf.DrivingRangeActivity"
             android:label="@string/driving_range"
+            android:screenOrientation="portrait" >
+        </activity>
+        <activity
+            android:name="com.github.matt.williams.argolf.RoundActivity"
+            android:label="@string/round"
             android:screenOrientation="portrait" >
         </activity>
     </application>

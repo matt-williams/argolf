@@ -3,6 +3,7 @@ package com.github.matt.williams.argolf;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -60,6 +61,7 @@ public class SwingActivity extends Activity implements SensorEventListener {
     private float mLastAccelerationY;
     private float mMaxAccelerationY;
     private float mLastGravityY;
+    private boolean mMultitouchSupported;
 
     private enum State {
         INITIAL(R.string.swing_prompt_initial),
@@ -129,6 +131,8 @@ public class SwingActivity extends Activity implements SensorEventListener {
         mGolfSound = mSoundPool.load(this, R.raw.golf, 1);
 
         mPromptTextView.setText(getResources().getString(mState.getPromptId()));
+
+        mMultitouchSupported = getPackageManager().hasSystemFeature(PackageManager.FEATURE_TOUCHSCREEN_MULTITOUCH);
     }
 
     @Override
@@ -146,16 +150,19 @@ public class SwingActivity extends Activity implements SensorEventListener {
 
     private void updateState(boolean preSteadied, boolean steadied, boolean backswung, boolean hit) {
         State oldState = mState;
+        boolean bothThumbsPressed = (((mLeftThumbPressed) &&
+                                      (mRightThumbPressed)) ||
+                                     ((!mMultitouchSupported) &&
+                                      ((mLeftThumbPressed) ||
+                                       (mRightThumbPressed))));
         if (mState == State.INITIAL) {
-            if ((mLeftThumbPressed) &&
-                (mRightThumbPressed)) {
+            if (bothThumbsPressed) {
                 mState = State.POSITION;
             }
         } else if (mState == State.POSITION) {
             if (mPositioned) {
                 mState = State.PRE_STEADY;
-            } else if ((!mLeftThumbPressed) ||
-                       (!mRightThumbPressed)) {
+            } else if (!bothThumbsPressed) {
                 mState = State.INITIAL;
             }
         } else if (mState == State.PRE_STEADY) {
@@ -163,8 +170,7 @@ public class SwingActivity extends Activity implements SensorEventListener {
                 mState = State.STEADY;
             } else if (!mPositioned) {
                 mState = State.POSITION;
-            } else if ((!mLeftThumbPressed) ||
-                       (!mRightThumbPressed)) {
+            } else if (!bothThumbsPressed) {
                 mState = State.INITIAL;
             }
         } else if (mState == State.STEADY) {
@@ -172,22 +178,19 @@ public class SwingActivity extends Activity implements SensorEventListener {
                 mState = State.BACKSWING;
             } else if (!mPositioned) {
                 mState = State.POSITION;
-            } else if ((!mLeftThumbPressed) ||
-                       (!mRightThumbPressed)) {
+            } else if (!bothThumbsPressed) {
                 mState = State.INITIAL;
             }
         } else if (mState == State.BACKSWING) {
             if (hit) {
                 mState = State.RELEASE;
-            } else if ((!mLeftThumbPressed) ||
-                       (!mRightThumbPressed)) {
+            } else if (!bothThumbsPressed) {
                 mState = State.INITIAL;
             }
         } else if (mState == State.SWING) {
             if (hit) {
                 mState = State.RELEASE;
-            } else if ((!mLeftThumbPressed) ||
-                       (!mRightThumbPressed)) {
+            } else if (!bothThumbsPressed) {
                 mState = State.INITIAL;
             }
         } else if (mState == State.RELEASE) {

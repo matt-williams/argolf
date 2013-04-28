@@ -13,6 +13,7 @@
     <string name="play">Play</string>
     <string name="drive">Drive</string>
     <string name="delete">Delete</string>
+    <string name="round">Round</string>
     
     <string name="swing_prompt_initial">Hold your phone in both hands and put your thumbs on the thumbprints</string>
     <string name="swing_prompt_position">Position your phone as if you were about to play a golf stroke</string>
