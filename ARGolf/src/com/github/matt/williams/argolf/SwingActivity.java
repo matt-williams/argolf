@@ -101,6 +101,14 @@ public class SwingActivity extends Activity implements SensorEventListener {
                 } else if ((event.getAction() == MotionEvent.ACTION_UP) ||
                            (event.getAction() == MotionEvent.ACTION_CANCEL)) {
                     mLeftThumbPressed = false;
+                } else if (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN) {
+                    // Some phones seem to report ACTION_POINTER_DOWN for the second touch - assume
+                    // this is the right thumb.
+                    mRightThumbPressed = true;
+                } else if (event.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
+                    // Some phones seem to report ACTION_POINTER_UP for the second touch - assume
+                    // this is the right thumb.
+                    mRightThumbPressed = false;
                 }
                 updateState(false, false, false, false);
                 return true;
@@ -115,6 +123,14 @@ public class SwingActivity extends Activity implements SensorEventListener {
                 } else if ((event.getAction() == MotionEvent.ACTION_UP) ||
                            (event.getAction() == MotionEvent.ACTION_CANCEL)) {
                     mRightThumbPressed = false;
+                } else if (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN) {
+                    // Some phones seem to report ACTION_POINTER_DOWN for the second touch - assume
+                    // this is the left thumb.
+                    mLeftThumbPressed = true;
+                } else if (event.getActionMasked() == MotionEvent.ACTION_POINTER_UP) {
+                    // Some phones seem to report ACTION_POINTER_UP for the second touch - assume
+                    // this is the left thumb.
+                    mLeftThumbPressed = false;
                 }
                 updateState(false, false, false, false);
                 return true;
