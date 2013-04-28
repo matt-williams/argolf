@@ -20,13 +20,19 @@
         android:layout_centerVertical="true"
         android:layout_alignParentLeft="true"
         android:layout_centerHorizontal="true"
-        android:src="@drawable/left_thumb" />
+        android:src="@drawable/left_thumb"
+        android:paddingTop="50dip"
+        android:paddingBottom="50dip"
+        android:paddingRight="50dip" />
     <ImageView
         android:id="@+id/rightThumbImageView"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:src="@drawable/right_thumb" />
+        android:src="@drawable/right_thumb"
+        android:paddingTop="50dip"
+        android:paddingBottom="50dip"
+        android:paddingLeft="50dip" />
 
 </RelativeLayout>
