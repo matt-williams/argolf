@@ -93,7 +93,7 @@ public class DrivingRangeActivity extends ListActivity {
 
         try {
             mClient = new MobileServiceClient("https://argolf.azure-mobile.net/",
-                                              "WnfjItilEFHiSXLHikVvIOjwRHXdqW20",
+                                              Secrets.AZURE_API_KEY,
                                               this);
             mClient.getTable(Drive.class).orderBy("Distance", QueryOrder.Descending).top(100).execute(new TableQueryCallback<Drive>() {
                 @Override

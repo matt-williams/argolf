@@ -12,6 +12,12 @@
 bin/
 gen/
 
+# libraries (not distributable)
+libs/
+
+# Secret keys
+Secrets.java
+
 # Local configuration file (sdk path, etc)
 local.properties
 
